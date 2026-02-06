@@ -689,7 +689,7 @@ def visualize_connectivity_comparison(original_data: Dict, connected_data: Dict,
 
 # ==================== 主程序 ====================
 
-def optimize_for_gft(json_file: str = "first_rabbit_music_spacetime.json"):
+def optimize_for_gft(json_file: str = "./outputs/json/first_rabbit_music_spacetime.json"):
     """为GFT优化三角化"""
     
     print("="*70)
@@ -806,7 +806,7 @@ def optimize_for_gft(json_file: str = "first_rabbit_music_spacetime.json"):
 
 if __name__ == "__main__":
     # 运行优化
-    result = optimize_for_gft("first_rabbit_music_spacetime.json")
+    result = optimize_for_gft("./outputs/json/first_rabbit_music_spacetime.json")
     
     if result:
         print("\n" + "="*70)

@@ -1,7 +1,7 @@
 # Quantum Field Theoretic Music Generation (QFT-Music)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://img.shields.io/badge/DOI-10.17605%2FOSF.IO%2FB62GP-blue)](https://doi.org/10.17605/OSF.IO/B62GP)
+[![DOI](https://img.shields.io/badge/DOI-10.17605%2FOSF.IO%2FB62GP-blue)](https://doi.org/10.17605/OSF.IO/b62gp)
 
 A novel framework for mapping music to spatiotemporal structures using Quantum Field Theory (specifically Group Field Theory) as a universal intermediate representation.
 
@@ -54,7 +54,7 @@ TBD
 
 ## Output Examples
 
-Processing `first_rabbit.midi` (394 seconds, 8431 notes) produces:
+Processing `first_rabbit.mid` (394 seconds, 8431 notes) produces:
 
 | Metric                   | Value                  |
 | ------------------------ | ---------------------- |
@@ -201,13 +201,13 @@ TBD
 
 ## Gallery
 
-![img](./gft_engineering_visualization.png)
+![img](./outputs/images/gft_engineering_visualization.png)
 
-![img](./first_rabbit_robust_triangulation.png)
+![img](./outputs/images/first_rabbit_robust_triangulation.png)
 
-![img](./first_rabbit_music_spacetime_complete_analysis.png)
+![img](./outputs/images/first_rabbit_music_spacetime_complete_analysis.png)
 
-![img](first_rabbit_music_spacetime_connectivity_comparison.png)
+![img](./outputs/images/first_rabbit_music_spacetime_connectivity_comparison.png)
 
 
 
@@ -224,6 +224,6 @@ OSF: [https://osf.io/b62gp](https://osf.io/b62gp/)
 *"Music is the arithmetic of sounds as optics is the geometry of light."*  
 *– Claude Debussy*
 
-*"The theory of groups is the language of symmetry, and symmetry is one of the fundamental concepts in theoretical physics."* 
+*"The theory of groups is the language of symmetry, and symmetry is one of the fundamental concepts in theoretical physics."*
 *– Chen Ning Yang*
 

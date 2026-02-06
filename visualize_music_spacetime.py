@@ -444,7 +444,7 @@ def create_enhanced_network_visualization(json_path: str):
 # 使用示例
 if __name__ == "__main__":
     # 假设您的JSON文件名为 'first_rabbit_music_spacetime.json'
-    json_file = "first_rabbit_music_spacetime.json"
+    json_file = "outputs/json/first_rabbit_music_spacetime.json"
     
     if os.path.exists(json_file):
         print("="*70)

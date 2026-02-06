@@ -708,7 +708,7 @@ def process_midi_with_robust_triangulation(midi_path: str = "first_rabbit.midi")
             'analysis': analysis
         }
         
-        output_file = f"{midi_name}_music_spacetime.json"
+        output_file = f"./outputs/json/{midi_name}_music_spacetime.json"
         with open(output_file, 'w') as f:
             json.dump(output_data, f, indent=2, default=str)
         
@@ -724,7 +724,7 @@ def process_midi_with_robust_triangulation(midi_path: str = "first_rabbit.midi")
                                  for i in range(len(data['points']))}
             }
             
-            gft_file = f"{midi_name}_gft_input.json"
+            gft_file = f"./outputs/json/{midi_name}_gft_input.json"
             with open(gft_file, 'w') as f:
                 json.dump(gft_data, f, indent=2)
             
@@ -833,7 +833,7 @@ MusicSpacetimeTriangulator._force_triangle_generation = lambda self, points: for
 
 if __name__ == "__main__":
     # 处理MIDI文件
-    result = process_midi_with_robust_triangulation("first_rabbit.mid")
+    result = process_midi_with_robust_triangulation("asserts/first_rabbit.mid")
     
     if result:
         print(f"\nFinal result for GFT research:")
