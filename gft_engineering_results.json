@@ -1,0 +1,39 @@
+{
+  "config": {
+    "num_group_elements": 24,
+    "target_vertices": 25,
+    "target_triangles": 250,
+    "mass_squared": 0.02,
+    "lambda_coupling": 0.35,
+    "temperature": 1.0,
+    "mcmc_steps": 2500,
+    "batch_size": 5,
+    "init_triangles": 40,
+    "max_edge_length": 1.2,
+    "min_triangle_quality": 0.3,
+    "verbose": true,
+    "save_intermediate": false
+  },
+  "analysis": {
+    "num_vertices": 24,
+    "num_triangles": 83,
+    "num_components": 1,
+    "avg_edge_length": 0.8841844939558192,
+    "std_edge_length": 0.23410103655242376,
+    "avg_triangle_quality": 0.8003803473690861,
+    "avg_field_value": 0.5730827648163407,
+    "max_component_size": 24,
+    "avg_vertex_degree": 8.916666666666666,
+    "is_connected": true
+  },
+  "final_config_size": 83,
+  "timing": {
+    "total": 1.980431079864502,
+    "mcmc": 1.975428819656372,
+    "analysis": 0.005002260208129883
+  },
+  "performance": {
+    "mcmc_steps_per_second": 1265.5480041213925,
+    "acceptance_rate": 0.9896
+  }
+}
