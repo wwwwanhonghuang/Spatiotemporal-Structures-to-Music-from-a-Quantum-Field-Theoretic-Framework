@@ -87,7 +87,27 @@ class MusicSpacetimeTriangulator:
                         del active_notes[note_key]
         
         return notes
+    def ensure_vertex_coverage(self, points, triangles):
     
+        used = set(i for tri in triangles for i in tri)
+        unused = set(range(len(points))) - used
+
+        if not unused:
+            return triangles
+
+        print(f"  • Repairing {len(unused)} isolated vertices")
+
+        kdt = KDTree(points)
+
+        for u in unused:
+
+            _, idx = kdt.query(points[u], k=min(3, len(points)))
+
+            tri = tuple(sorted(idx))
+            triangles.append(tri)
+
+        return triangles
+
     def _create_structured_grid(self, notes: List[Dict]) -> Dict[str, Any]:
         """创建结构化时空网格"""
         if not notes:
@@ -133,35 +153,36 @@ class MusicSpacetimeTriangulator:
         }
     
     def _extract_grid_points(self, grid_data: Dict[str, Any]) -> np.ndarray:
-        """从网格中提取点"""
+        
         grid = grid_data['grid']
         grid_res = grid_data['resolution']
-        
+
+        time_min, time_max = grid_data['time_range']
+        pitch_min, pitch_max = grid_data['pitch_range']
+
         points = []
-        
-        # 遍历网格，为每个非空单元创建点
+
         for i in range(grid_res):
             for j in range(grid_res):
-                if grid[i, j, 0] > 0:  # 有音符的单元
-                    # 3D坐标：时间, 音高, 力度
+
+                if grid[i, j, 0] > 0:
+
+                    time_val = time_min + (i / grid_res) * (time_max - time_min)
+                    pitch_val = pitch_min + (j / grid_res) * (pitch_max - pitch_min)
+
                     point = np.array([
-                        i / grid_res * self.config.time_scale,
-                        j / grid_res * self.config.pitch_scale,
-                        grid[i, j, 1] * self.config.velocity_scale  # 力度
+                        time_val * self.config.time_scale,
+                        pitch_val * self.config.pitch_scale,
+                        grid[i, j, 1] * self.config.velocity_scale
                     ])
+
                     points.append(point)
-        
+
         if points:
-            points_array = np.vstack(points)
-            # 归一化
-            for dim in range(3):
-                min_val = points_array[:, dim].min()
-                max_val = points_array[:, dim].max()
-                if max_val > min_val:
-                    points_array[:, dim] = (points_array[:, dim] - min_val) / (max_val - min_val)
-            return points_array
-        else:
-            return np.array([])
+            return np.vstack(points)
+
+        return np.array([])
+
     
     def _extract_grid_features(self, grid_data: Dict[str, Any]) -> List[Dict]:
         """提取特征"""
@@ -190,55 +211,131 @@ class MusicSpacetimeTriangulator:
         
         return features
     
-    def create_music_triangulation(self, points: np.ndarray) -> List[Tuple[int, int, int]]:
-        """为音乐数据创建三角化"""
+    def create_music_triangulation(self, points):
+    
         if len(points) < 3:
             return []
-        
-        print(f"\nCreating music triangulation for {len(points)} points...")
-        
-        # 方法1：尝试Delaunay
-        triangles_delaunay = self._try_delaunay(points)
-        if triangles_delaunay:
-            print(f"  • Delaunay created {len(triangles_delaunay)} triangles")
-            return triangles_delaunay
-        
-        # 方法2：凸包三角化
-        print("  • Delaunay failed, trying convex hull triangulation...")
-        triangles_hull = self._convex_hull_triangulation(points)
-        if triangles_hull:
-            print(f"  • Convex hull created {len(triangles_hull)} triangles")
-            return triangles_hull
-        
-        # 方法3：最近邻连接
-        print("  • Hull failed, trying nearest neighbor connections...")
-        triangles_nn = self._nearest_neighbor_triangulation(points)
-        print(f"  • Nearest neighbor created {len(triangles_nn)} triangles")
-        return triangles_nn
+
+        print(f"\nCreating musical simplicial complex for {len(points)} points...")
+
+        triangles = self._try_delaunay(points)
+
+        if not triangles:
+            print("Delaunay failed — fallback to nearest neighbor.")
+            triangles = self._nearest_neighbor_triangulation(points)
+
+        # --- repair coverage ---
+        triangles = self.ensure_vertex_coverage(points, triangles)
+
+        # --- verify connectivity ---
+        G = self.create_mesh_graph(points, triangles)
+
+        if not nx.is_connected(G):
+
+            print("Graph still disconnected — performing secondary bridging.")
+
+            components = list(nx.connected_components(G))
+            triangles += self._bridge_components(points, components)
+
+            G = self.create_mesh_graph(points, triangles)
+
+            if not nx.is_connected(G):
+                raise RuntimeError("Failed to construct connected spacetime.")
+
+        # --- diagnostics ---
+        print("  • Connected:", nx.is_connected(G))
+        print("  • Avg degree:", np.mean([d for _, d in G.degree()]))
+        print("  • Triangle count:", len(triangles))
+
+        return triangles
+
     
     def _try_delaunay(self, points: np.ndarray) -> List[Tuple[int, int, int]]:
-        """尝试Delaunay三角化"""
-        try:
-            # 添加随机扰动避免共面
-            if len(points) > 0:
-                noise = np.random.normal(0, 1e-6, points.shape)
-                points_perturbed = points + noise
-            else:
-                points_perturbed = points
-            
-            tri = Delaunay(points_perturbed)
-            triangles = []
-            
-            for simplex in tri.simplices:
-                if len(simplex) == 3:
-                    # 检查三角形质量
-                    p1, p2, p3 = points[simplex[0]], points[simplex[1]], points[simplex[2]]
-                    if self._is_valid_triangle(p1, p2, p3):
-                        triangles.append(tuple(sorted(simplex)))
-            
-            return triangles
-        except:
+        """
+        Robust 2D Delaunay triangulation with enforced connectivity.
+        Uses time-pitch plane as base manifold.
+        """
+
+        if len(points) < 3:
             return []
+
+        try:
+            # Use only time and pitch
+            pts2d = points[:, :2]
+
+            # tiny jitter prevents degeneracy
+            pts2d = pts2d + np.random.normal(0, 1e-9, pts2d.shape)
+
+            tri = Delaunay(pts2d)
+            triangles = [
+                tuple(sorted(simplex))
+                for simplex in tri.simplices
+                if self._is_valid_triangle(
+                    points[simplex[0]],
+                    points[simplex[1]],
+                    points[simplex[2]]
+                )
+            ]
+
+
+            # --- enforce connectivity ---
+            G = self.create_mesh_graph(points, triangles)
+            components = list(nx.connected_components(G))
+
+            if len(components) > 1:
+                print(f"  • Found {len(components)} disconnected regions — bridging...")
+
+                triangles += self._bridge_components(points, components)
+
+            return triangles
+
+        except Exception as e:
+            print("Delaunay failed:", e)
+            return []
+    def _bridge_components(self, points, components):
+        """
+        Connect components by shortest-distance edges
+        and convert them into triangles.
+        """
+
+        bridges = []
+
+        comps = [list(c) for c in components]
+
+        while len(comps) > 1:
+
+            best_pair = None
+            best_dist = float("inf")
+
+            for i in range(len(comps)):
+                for j in range(i+1, len(comps)):
+
+                    A = np.array(comps[i])
+                    B = np.array(comps[j])
+
+                    dists = cdist(points[A], points[B])
+                    idx = np.unravel_index(np.argmin(dists), dists.shape)
+
+                    if dists[idx] < best_dist:
+                        best_dist = dists[idx]
+                        best_pair = (i, j, A[idx[0]], B[idx[1]])
+
+            i, j, a, b = best_pair
+
+            # find a third nearby point to form triangle
+            kdt = KDTree(points)
+            _, neigh = kdt.query(points[a], k=3)
+
+            for c in neigh:
+                if c != a and c != b:
+                    bridges.append(tuple(sorted((a, b, c))))
+                    break
+
+            comps[i] = list(set(comps[i]) | set(comps[j]))
+            comps.pop(j)
+
+        return bridges
+
     
     def _convex_hull_triangulation(self, points: np.ndarray) -> List[Tuple[int, int, int]]:
         """凸包三角化"""
@@ -323,44 +420,33 @@ class MusicSpacetimeTriangulator:
         
         return unique_triangles
     
-    def _is_valid_triangle(self, p1: np.ndarray, p2: np.ndarray, p3: np.ndarray) -> bool:
-        """检查三角形是否有效"""
-        # 1. 检查边长
-        edges = [
-            np.linalg.norm(p1 - p2),
-            np.linalg.norm(p2 - p3),
-            np.linalg.norm(p3 - p1)
-        ]
+
+    def _is_valid_triangle(self, p1, p2, p3):
         
-        if max(edges) > self.config.max_edge_length:
+        # compute edges
+        a = np.linalg.norm(p1 - p2)
+        b = np.linalg.norm(p2 - p3)
+        c = np.linalg.norm(p3 - p1)
+
+        if min(a, b, c) < 1e-6:
             return False
-        
-        # 2. 检查最小角度
-        # 计算角度
-        a, b, c = edges[0], edges[1], edges[2]
-        
-        # 使用余弦定理
-        if a > 0 and b > 0 and c > 0:
-            cos_A = (b**2 + c**2 - a**2) / (2 * b * c)
-            cos_B = (a**2 + c**2 - b**2) / (2 * a * c)
-            cos_C = (a**2 + b**2 - c**2) / (2 * a * b)
-            
-            # 转换为角度
-            angle_A = np.degrees(np.arccos(max(-1, min(1, cos_A))))
-            angle_B = np.degrees(np.arccos(max(-1, min(1, cos_B))))
-            angle_C = np.degrees(np.arccos(max(-1, min(1, cos_C))))
-            
-            min_angle = min(angle_A, angle_B, angle_C)
-            if min_angle < self.config.min_triangle_angle:
-                return False
-        
-        # 3. 检查是否退化（三点共线）
-        # 计算面积
+
+        # area check
         area = 0.5 * np.linalg.norm(np.cross(p2 - p1, p3 - p1))
+
         if area < 1e-10:
             return False
-        
+
+        # VERY gentle angle constraint
+        cos_A = (b*b + c*c - a*a) / (2*b*c)
+        cos_A = np.clip(cos_A, -1, 1)
+        angle = np.degrees(np.arccos(cos_A))
+
+        if angle < 2.0:
+            return False
+
         return True
+
     
     def create_mesh_graph(self, points: np.ndarray, triangles: List[Tuple[int, int, int]]) -> nx.Graph:
         """创建网格图"""
@@ -421,6 +507,13 @@ class MusicSpacetimeTriangulator:
                 analysis['temporal_structure']['time_range'] = (min(triangle_times), max(triangle_times))
                 analysis['temporal_structure']['time_distribution'] = np.histogram(triangle_times, bins=10)[0].tolist()
         
+        analysis['topology'] = {
+            "connected": nx.is_connected(G),
+            "avg_degree": np.mean([d for _, d in G.degree()]),
+            "num_vertices": len(points),
+            "num_triangles": len(triangles)
+        }
+
         return analysis
     
     def _classify_chord(self, pitches: List[int]) -> str:
