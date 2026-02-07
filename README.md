@@ -52,6 +52,9 @@ TBD
 
 ### **5. GFT Forwarding Model**
 
+### **6. A MIDI Spinfoam Intermediate Represenation and a Compiler for Compiling MIDI to  MIDI Spinfoam Intermediate Represenation**
+
+
 ## Output Examples
 
 Processing `first_rabbit.mid` (394 seconds, 8431 notes) produces:
@@ -128,6 +131,16 @@ If you use this framework in your research, please cite:
   url={https://doi.org/10.17605/OSF.IO/B62GP},
   abstract={In exploring the essence of music at the ontological level, there exists the generative-structural account. The generative process and generative structure together constitute music. While existing approaches to mapping structures to music often treat spectral and generative aspects separately, a unified theoretical and practical framework remains lacking. QFT, as a universal language for describing spatiotemporal structures and their generative processes, this work explores using it as a general framework to model spatiotemporal structures and generativity, and map them to musical structures. As a preliminary case study, it is conducted on the spatiotemporal structures of EEG, considering its important significance for well-being. Secondly, from the perspectives of philosophy of art and philosophy of science, we discuss structure and art, as well as possible debates about this method in philosophy, science, and engineering. As a proposal, this work expects to provide the first systematic quantum field-theoretic framework for structure-to-music mapping.}
 }
+@misc{huang2026spinfoam,
+  author       = {Huang, Wanhong},
+  title        = {Spin Foam Representation of Music: Theory and Compilation},
+  year         = {2026},
+  month        = feb,
+  day          = {7},
+  doi          = {10.17605/OSF.IO/7GPZ2},
+  url          = {https://doi.org/10.17605/OSF.IO/7GPZ2},
+  note         = {OSF}
+}
 ```
 
 ### Related Publications
@@ -163,6 +176,7 @@ If you use this framework in your research, please cite:
 ## Future Directions
 
 ### Short-term
+- [ ] Develop General Spin Foam Intermediate Representation and Compilers
 - [ ] Integration with GFT simulators
 - [ ] Real-time MIDI generation from GFT dynamics
 - [ ] EEG data pipeline implementation
