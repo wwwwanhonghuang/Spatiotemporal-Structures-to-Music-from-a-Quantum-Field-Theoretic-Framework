@@ -6,7 +6,7 @@ from music_spacetime.visualization.music_spacetime_visualizer import MusicSpacet
 import os, json
 from typing import List, Tuple
 import numpy as np
-from io_helpers.json_encoders import NumpyEncoder
+from utils.io_helpers.json_encoders import NumpyEncoder
 
 
 def process_midi_with_robust_triangulation(midi_path: str = "assets/first_rabbit.mid", json_output_file=""):
