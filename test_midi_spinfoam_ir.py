@@ -1,38 +1,38 @@
 
-from spacetime_ir.midi_ir.midi_ir import compile_midi_to_spinfoam, create_test_midi, print_spinfoam_summary
+from spacetime_ir.midi_ir.midi_ir import compile_midi_to_spinfoam_ir, print_summary, faces_of_edge, glue_faces_between
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--mid_input", default="assets/first_rabbit.mid")
+parser.add_argument("-v", action="store_true")
+
+args = parser.parse_args()
+
+midi = args.mid_input
+
+
+
+# =============================================================================
+# Main
+# =============================================================================
 
 if __name__ == "__main__":
-    # Create and compile test MIDI
-    test_midi = "assets/first_rabbit.mid"#create_test_midi()
-    
-    try:
-        # Compile to spin foam
-        foam = compile_midi_to_spinfoam(
-            midi_file_path=test_midi,
-            output_json_path="philosophy_spinfoam.json"
-        )
-        
-        # Print summary
-        print_spinfoam_summary(foam)
-        
-        # Demonstrate the causal structure
-        print(f"\n{'='*80}")
-        print(f"TIME EMERGES FROM THIS CAUSAL CHAIN:")
-        print(f"{'='*80}")
-        
-        chain = foam.get_causal_chain()
-        for i, event in enumerate(chain):
-            print(f"Step {i}: At E{event.event_id}, after {event.time:.2f} beats of musical time")
-            if event.duration_to_next:
-                print(f"       Music persists unchanged for {event.duration_to_next:.2f} beats")
-                print(f"       Then at E{event.next_event_id}, a change occurs")
-            else:
-                print(f"       Music ends here")
-            print()
-        
-    except ImportError as e:
-        print(f"Error: {e}")
-        print("Please install mido: pip install mido")
-    except Exception as e:
-        print(f"Error: {e}")
+    midi_path = midi #create_test_midi()
+
+    ir = compile_midi_to_spinfoam_ir(
+        midi_path,
+        output_json="test_example.spinfoam.v4.json",
+        include_foliation=True,     # set False to make ontology-only output
+        glue_top_k=2,               # sparse Γ links
+        intertwiner_mode="hybrid",  # "vector_closure" | "fusion_4valent" | "constraint_gate" | "hybrid"
+        closure_tol=0.75
+    )
+
+    print_summary(ir)
+
+    # Example search:
+    # - find (j,m) of note-edge 0:
+    e0_faces = faces_of_edge(ir, 0)
+    # - find glue-worldsheet faces between note-edge 0 and 1:
+    g01 = glue_faces_between(ir, 0, 1)
+    print(f"\nQuery demo: edge0 component faces={len(e0_faces)} ; glue faces between e0-e1={len(g01)}")
