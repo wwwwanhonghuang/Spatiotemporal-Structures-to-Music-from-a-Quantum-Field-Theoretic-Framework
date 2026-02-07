@@ -41,7 +41,7 @@ from spacetime_ir.midi_ir.gluing import *
 from spacetime_ir.midi_ir.intrinsic_vertex import *
 
 from utils.math_and_physics.math_and_physics import *
-
+from utils.music import pitch_to_name
 
 @dataclass
 class MIDISpinFoamIR:

@@ -2,7 +2,7 @@
 # =============================================================================
 # Intertwiner models (more "geometric / physical")
 # =============================================================================
-from spin_physics import CHANNELS
+from spacetime_ir.midi_ir.spin_physics import CHANNELS
 from typing import List, Dict, Tuple
 from utils.math_and_physics.math_and_physics import v_add, v_norm, q_half
 

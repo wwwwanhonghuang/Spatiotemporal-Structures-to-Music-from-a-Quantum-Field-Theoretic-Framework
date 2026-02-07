@@ -1,27 +1,28 @@
 
-from spacetime_ir.midi_ir.midi_ir import compile_midi_to_spinfoam_ir, print_summary, faces_of_edge, glue_faces_between
+from spacetime_ir.compilers.compiler_midi_to_midi_spinfoam import compile_midi_to_spinfoam_ir
+from spacetime_ir.midi_ir.midi_ir import print_summary, faces_of_edge, glue_faces_between
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--mid_input", default="assets/first_rabbit.mid")
+parser.add_argument("--midi_file_path", default="assets/first_rabbit.mid")
+parser.add_argument("--ir_output", default="test_example.spinfoam.v4.json")
+
 parser.add_argument("-v", action="store_true")
 
 args = parser.parse_args()
 
-midi = args.mid_input
-
-
+midi_file_path = args.midi_file_path
 
 # =============================================================================
 # Main
 # =============================================================================
 
 if __name__ == "__main__":
-    midi_path = midi #create_test_midi()
+    midi_path = midi_file_path #create_test_midi()
 
     ir = compile_midi_to_spinfoam_ir(
         midi_path,
-        output_json="test_example.spinfoam.v4.json",
+        output_json=args.ir_output,
         include_foliation=True,     # set False to make ontology-only output
         glue_top_k=2,               # sparse Γ links
         intertwiner_mode="hybrid",  # "vector_closure" | "fusion_4valent" | "constraint_gate" | "hybrid"
